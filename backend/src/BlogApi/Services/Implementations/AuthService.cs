@@ -15,23 +15,47 @@ namespace BlogApi.Services.Implementations;
 public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
-    private readonly JwtService _jwt;
-    public AuthService(AppDbContext context, JwtService jwtService)
+    private readonly TokenService _tokenService;
+    public AuthService(AppDbContext context, TokenService tokenService)
     {
         _context = context;
-        _jwt = jwtService;
+        _tokenService = tokenService;
     }
     public AuthResponseDto Register(RegisterRequestDto dto)
     {
         if (_context.Users.Where(u => u.Username == dto.Username).ToList().Count != 0) throw new RequestException(HttpStatusCode.BadRequest, "Username already existed");
-        var user = new User { Username = dto.Username, Email = dto.Email, Role = Enums.UserRole.Author, PasswordHash = HashHelper.Hash(dto.Password) };
-        _context.Users.Add(user);
-        _context.SaveChanges();
-        var response = new AuthResponseDto
+        using var transaction = _context.Database.BeginTransaction();
+        try
         {
-            Token = _jwt.GenerateJwtToken(user),
-        };
-        return response;
+            var user = new User { Username = dto.Username, Email = dto.Email, Role = Enums.UserRole.Author, PasswordHash = HashHelper.Hash(dto.Password) };
+            _context.Users.Add(user);
+            _context.SaveChanges();
+            var accessToken = _tokenService.GenerateJwtToken(user);
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = _tokenService.GenerateRefreshToken(),
+                ExpiresAt = _tokenService.GetRefreshTokenExpiration(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            _context.SaveChanges();
+            transaction.Commit();
+
+            return new AuthResponseDto
+            {
+                Token = accessToken,
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiresAt = refreshToken.ExpiresAt
+            };
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            throw new RequestException(HttpStatusCode.InternalServerError, "An error occurred during registration", ex.Message);
+        }
     }
 
     public AuthResponseDto Login(LoginRequestDto dto)
@@ -41,11 +65,33 @@ public class AuthService : IAuthService
         {
             throw new RequestException(HttpStatusCode.Unauthorized, "Invalid username or password");
         }
+
+        var refreshToken = new RefreshToken
+        {
+            UserId = user.Id,
+            Token = _tokenService.GenerateRefreshToken(),
+            ExpiresAt = _tokenService.GetRefreshTokenExpiration(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.RefreshTokens.Add(refreshToken);
+        _context.SaveChanges();
+
         var response = new AuthResponseDto
         {
-            Token = _jwt.GenerateJwtToken(user),
+            Token = _tokenService.GenerateJwtToken(user),
+            RefreshToken = refreshToken.Token,
+            RefreshTokenExpiresAt = refreshToken.ExpiresAt
         };
         return response;
+    }
+
+    public AuthResponseDto RefreshToken()
+    {
+
+
+
+        throw new Exception();
     }
 
     public void Logout()

@@ -4,13 +4,14 @@ using BlogApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace BlogApi.Services.Commons;
 
-public class JwtService
+public class TokenService
 {
     private readonly IConfiguration _config;
-    public JwtService(IConfiguration config)
+    public TokenService(IConfiguration config)
     {
         _config = config;
     }
@@ -18,7 +19,7 @@ public class JwtService
     public string GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_config["Jwt:Secret"]);
+        var key = Encoding.ASCII.GetBytes(_config["Auth:Jwt:Secret"]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -27,11 +28,23 @@ public class JwtService
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username)
             }),
-            Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["Jwt:ExpirationMinutes"])),
+            Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["Auth:Jwt:ExpirationMinutes"])),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        RandomNumberGenerator.Fill(randomBytes);
+        return Convert.ToBase64String(randomBytes);
+    }
+
+    public DateTime GetRefreshTokenExpiration()
+    {
+        return DateTime.UtcNow.AddDays(Convert.ToDouble(_config["Auth:RefreshToken:ExpirationDays"]));
     }
 }

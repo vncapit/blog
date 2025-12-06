@@ -23,13 +23,29 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public ActionResult Register(RegisterRequestDto registerDto)
     {
-        return Ok(ApiResponse<AuthResponseDto>.Ok(_authService.Register(registerDto)));
+        var result = _authService.Register(registerDto);
+        Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = result.RefreshTokenExpiresAt,
+            SameSite = SameSiteMode.None,
+            Secure = false
+        });
+        return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
     }
 
     [HttpPost("login")]
     public ActionResult Login(LoginRequestDto loginDto)
     {
-        return Ok(ApiResponse<AuthResponseDto>.Ok(_authService.Login(loginDto)));
+        var result = _authService.Login(loginDto);
+        Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = result.RefreshTokenExpiresAt,
+            SameSite = SameSiteMode.None,
+            Secure = true
+        });
+        return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
     }
 
 }
