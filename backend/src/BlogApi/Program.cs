@@ -1,4 +1,5 @@
 using BlogApi.Data;
+using BlogApi.Middlewares;
 using BlogApi.Services.Commons;
 using BlogApi.Services.Implementations;
 using BlogApi.Services.Interfaces;
@@ -30,6 +31,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // app.UseHttpsRedirection();
 
