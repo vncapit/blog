@@ -17,7 +17,7 @@ public class TestController : ControllerBase
     }
 
     [HttpGet("ping")]
-    public ActionResult<ApiResponse<string>> Ping()
+    public ActionResult Ping()
     {
         return Ok(ApiResponse<string>.Ok("pong"));
     }
