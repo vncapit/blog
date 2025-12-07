@@ -11,7 +11,7 @@ namespace BlogApi.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
-[AllowAnonymous]
+[Authorize]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -21,6 +21,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public ActionResult Register(RegisterRequestDto registerDto)
     {
         var result = _authService.Register(registerDto);
@@ -35,6 +36,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public ActionResult Login(LoginRequestDto loginDto)
     {
         var result = _authService.Login(loginDto);
@@ -45,7 +47,14 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.None,
             Secure = true
         });
+
         return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
+    }
+
+    [HttpPost("ping")]
+    public ActionResult Ping()
+    {
+        return Ok(ApiResponse<string>.Ok("Pong"));
     }
 
 }
