@@ -51,6 +51,34 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
     }
 
+    [HttpPost("refreshToken")]
+    [AllowAnonymous]
+    public ActionResult RefreshToken()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            return Unauthorized(ApiResponse<string>.Fail("Refresh token is missing"));
+        }
+
+        var result = _authService.RefreshToken(refreshToken);
+        if (result == null)
+        {
+            return Unauthorized(ApiResponse<string>.Fail("Invalid or expired refresh token"));
+        }
+
+        Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = result.RefreshTokenExpiresAt,
+            SameSite = SameSiteMode.None,
+            Secure = true
+        });
+
+        return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
+    }
+
+
     [HttpPost("ping")]
     public ActionResult Ping()
     {

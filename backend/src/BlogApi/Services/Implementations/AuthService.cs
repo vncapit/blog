@@ -86,12 +86,39 @@ public class AuthService : IAuthService
         return response;
     }
 
-    public AuthResponseDto RefreshToken()
+    public AuthResponseDto? RefreshToken(string token)
     {
+        var refreshToken = _context.RefreshTokens.FirstOrDefault(rt => rt.Token == token);
+        if (refreshToken == null)
+        {
+            return null;
+        }
+        if (refreshToken.ExpiresAt < DateTime.UtcNow)
+        {
+            _context.RefreshTokens.Remove(refreshToken);
+            _context.SaveChanges();
+            return null;
+        }
 
+        var user = _context.Users.FirstOrDefault(u => u.Id == refreshToken.UserId);
+        if (user == null)
+        {
+            _context.RefreshTokens.Remove(refreshToken);
+            _context.SaveChanges();
+            return null;
+        }
 
+        refreshToken.Token = _tokenService.GenerateRefreshToken();
+        refreshToken.ExpiresAt = _tokenService.GetRefreshTokenExpiration();
+        _context.RefreshTokens.Update(refreshToken);
+        _context.SaveChanges();
 
-        throw new Exception();
+        return new AuthResponseDto
+        {
+            Token = _tokenService.GenerateJwtToken(user),
+            RefreshToken = refreshToken.Token,
+            RefreshTokenExpiresAt = refreshToken.ExpiresAt
+        };
     }
 
     public void Logout()
