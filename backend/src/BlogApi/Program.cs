@@ -45,6 +45,7 @@ builder.Services.AddSwaggerGen(options =>
 // Register service:
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 
 // Add DB
