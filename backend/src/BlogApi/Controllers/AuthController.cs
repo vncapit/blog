@@ -51,6 +51,19 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<object>.Ok(new { Token = result.Token }));
     }
 
+    [HttpPost("logout")]
+    public ActionResult Logout()
+    {
+        var token = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(token))
+        {
+            return BadRequest(ApiResponse<string>.Fail("Refresh token is missing"));
+        }
+        _authService.Logout(token);
+        Response.Cookies.Delete("refreshToken");
+        return Ok();
+    }
+
     [HttpPost("refreshToken")]
     [AllowAnonymous]
     public ActionResult RefreshToken()

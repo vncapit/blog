@@ -7,6 +7,6 @@ public interface IAuthService
 {
     public AuthResponseDto Register(RegisterRequestDto registerRequestDto);
     public AuthResponseDto Login(LoginRequestDto loginRequestDto);
-    public AuthResponseDto? RefreshToken(string toke);
-    public void Logout();
+    public AuthResponseDto? RefreshToken(string token);
+    public void Logout(string token);
 }

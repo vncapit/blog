@@ -121,9 +121,13 @@ public class AuthService : IAuthService
         };
     }
 
-    public void Logout()
+    public void Logout(string token)
     {
-        throw new Exception();
-
+        var refreshToken = _context.RefreshTokens.FirstOrDefault(rt => rt.Token == token);
+        if (refreshToken != null)
+        {
+            _context.RefreshTokens.Remove(refreshToken);
+            _context.SaveChanges();
+        }
     }
 }
