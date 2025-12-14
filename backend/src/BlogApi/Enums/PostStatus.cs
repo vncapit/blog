@@ -5,5 +5,6 @@ public enum PostStatus
 {
     Draft,
     Published,
-    Archived
+    Archived,
+    Deleted
 }
