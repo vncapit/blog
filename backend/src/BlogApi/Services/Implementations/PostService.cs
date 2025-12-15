@@ -104,7 +104,7 @@ public class PostService : IPostService
         text = RemoveDiacritics(text).ToLowerInvariant();
 
         // replace invalid chars
-        text = Regex.Replace(text, @"[^a-z0-9\s-]", "");
+        text = Regex.Replace(text, @"[^a-z0-9\s-]", "-");
 
         // replace multiple spaces with single dash
         text = Regex.Replace(text, @"\s+", "-").Trim('-');
@@ -120,7 +120,9 @@ public class PostService : IPostService
         if (string.IsNullOrWhiteSpace(text))
             return text;
 
-        var normalized = text.Normalize(NormalizationForm.FormD);
+        var manuallyReplaced = text.Replace('đ', 'd').Replace('Đ', 'D');
+
+        var normalized = manuallyReplaced.Normalize(NormalizationForm.FormD);
         var sb = new StringBuilder();
 
         foreach (var ch in normalized)
