@@ -19,6 +19,7 @@
           required
           placeholder="Enter your password"
           class="w-full"
+          @keyup.enter="submit"
         />
       </div>
       <UButton
@@ -44,9 +45,6 @@
     console.log('Username:', username.value);
     console.log('Password:', password.value);
     const authStore = useAuthStore();
-    if (process.client) {
-      console.log('sdfsdf');
-      authStore.login(username.value, password.value);
-    }
+    authStore.login(username.value, password.value);
   };
 </script>
