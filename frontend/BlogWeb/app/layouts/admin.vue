@@ -7,8 +7,11 @@
       </template>
     </UHeader>
     <UMain class="p-4">
-      <slot />
+      <UContainer class="min-h-[400px] flex flex-col">
+        <slot />
+      </UContainer>
     </UMain>
+    <UFooter class="text-center"> © 2025 Mz Blog Admin Panel </UFooter>
   </div>
 </template>
 

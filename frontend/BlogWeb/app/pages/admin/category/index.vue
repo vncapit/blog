@@ -1,14 +1,16 @@
 <template>
-  <div class="min-w-full min-h-full">
+  <div class="flex flex-col flex-1">
     <h1 class="text-2xl font-bold mb-4">Category Management</h1>
-    <UTable :data="data" :columns="columns" class="flex-1" />
+    <UTable :data="categories || []" :columns="columns" class="flex-1" />
   </div>
 </template>
 
 <script setup lang="ts">
   import { h, resolveComponent } from 'vue';
   import type { TableColumn } from '@nuxt/ui';
-  import { ref } from 'vue';
+  import { useCategoryApi } from '~/composables/api/admin/useCategoryApi';
+  import { ref, onMounted } from 'vue';
+
   definePageMeta({
     layout: 'admin',
   });
@@ -20,19 +22,44 @@
 
   const UButton = resolveComponent('UButton');
 
-  const data = ref([
-    { id: 1, name: 'Category 1' },
-    { id: 2, name: 'Category 2' },
-  ]);
+  const categories = ref<Category[]>([]);
+
+  onMounted(async () => {
+    categories.value = await useCategoryApi();
+  });
 
   const columns: TableColumn<Category>[] = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'name', header: 'Name' },
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      meta: {
+        style: {
+          th: { width: '110px', textAlign: 'center' },
+          td: { width: '110px', textAlign: 'center' },
+        },
+      },
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      meta: {
+        style: {
+          th: { textAlign: 'center' },
+          td: { textAlign: 'center' },
+        },
+      },
+    },
     {
       accessorKey: '',
       header: 'Action',
+      meta: {
+        style: {
+          th: { width: '200px', textAlign: 'center' },
+          td: { width: '200px', textAlign: 'center' },
+        },
+      },
       cell: ({ row }) => {
-        return h('div', { class: 'flex gap-1' }, [
+        return h('div', { class: 'flex gap-1 justify-center items-center' }, [
           h(
             UButton,
             {
@@ -45,7 +72,7 @@
             UButton,
             {
               color: 'error',
-              onClick: () => editCategory(row.original.id),
+              onClick: () => deleteCategory(row.original.id),
             },
             'Delete'
           ),

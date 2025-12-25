@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { useAuthApi } from '~/composables/api/useAuthApi';
+import { useAuthApi } from '~/composables/api/admin/useAuthApi';
+import type { ApiResponse, AuthResponse } from '~/types';
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     isAuthenticated: false,
@@ -11,10 +12,18 @@ export const useAuthStore = defineStore('auth', {
       const res = await useAuthApi({ username, password });
       this.accessToken = res.token;
       this.isAuthenticated = true;
+      await navigateTo('/admin');
     },
     logout() {
       this.isAuthenticated = false;
       this.user = null;
+      navigateTo('/admin/login');
+    },
+    async refreshAccessToken() {
+      const res = await $fetch<ApiResponse<AuthResponse>>('/api/v1/Auth/refreshToken', {
+        method: 'POST',
+      });
+      this.accessToken = res.data.token;
     },
   },
 });
