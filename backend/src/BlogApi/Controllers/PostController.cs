@@ -23,7 +23,7 @@ public class PostController : ControllerBase
     [HttpGet("list")]
     public async Task<ActionResult> ListPosts([FromQuery] ListPostRequestDto dto)
     {
-        return Ok(ApiResponse<PaginationList<Post>>.Ok(await _postService.ListPostsAsync(dto)));
+        return Ok(ApiResponse<PaginationList<PostResponseDto>>.Ok(await _postService.ListPostsAsync(dto)));
     }
 
     [HttpPost("add")]

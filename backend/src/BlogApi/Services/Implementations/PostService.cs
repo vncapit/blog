@@ -30,6 +30,9 @@ public class PostService : IPostService
             Slug = GenerateSlug(dto.Title),
             Content = dto.Content,
             CategoryId = dto.CategoryId,
+            Excerpt = dto.Excerpt,
+            FeaturedImageUrl = dto.FeaturedImageUrl,
+            Tags = dto.Tags,
             Status = dto.Status,
             AuthorId = _currentUserService.GetUserId() ?? 0
         };
@@ -49,12 +52,33 @@ public class PostService : IPostService
         throw new RequestException(System.Net.HttpStatusCode.BadGateway, "Post not found");
     }
 
-    public async Task<PaginationList<Post>> ListPostsAsync(ListPostRequestDto dto)
+    public async Task<PaginationList<PostResponseDto>> ListPostsAsync(ListPostRequestDto dto)
     {
-        var query = _dbContext.Posts.AsQueryable();
+        
+        var query = from p in _dbContext.Posts where p.Status != PostStatus.Deleted
+        join u in _dbContext.Users on p.AuthorId equals u.Id
+        join c in _dbContext.Categories on p.CategoryId equals c.Id
+        select new PostResponseDto
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Slug = p.Slug,
+            Content = p.Content,                    
+            CategoryId = p.CategoryId,
+            CategoryName = c.Name,
+            Excerpt = p.Excerpt,
+            FeaturedImageUrl = p.FeaturedImageUrl,
+            Tags = p.Tags,
+            Status = p.Status,
+            AuthorId = p.AuthorId,
+            AuthorName = u.Username,
+            CreatedAt = p.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+            UpdatedAt = p.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+        };
+
         if (dto.TitleContains != null)
         {
-            query = query.Where(p => p.Title.ToLower().Contains(dto.TitleContains.ToLower()));
+            query = query.Where(p => EF.Functions.Like(p.Title, $"%{dto.TitleContains}%"));
         }
         if (dto.CategoryId != null)
         {
@@ -64,7 +88,7 @@ public class PostService : IPostService
         {
             query = query.Where(p => p.Status == dto.Status);
         }
-        var res = new PaginationList<Post>();
+        var res = new PaginationList<PostResponseDto>();
         res.TotalCount = query.Count();
         res.Items = await query.Skip((dto.PageNumber - 1) * dto.PageSize).Take(dto.PageSize).ToListAsync();
         return res;
@@ -92,6 +116,9 @@ public class PostService : IPostService
         post.Slug = GenerateSlug(dto.Title);
         post.Content = dto.Content;
         post.CategoryId = dto.CategoryId;
+        post.Excerpt = dto.Excerpt;
+        post.FeaturedImageUrl = dto.FeaturedImageUrl;
+        post.Tags = dto.Tags;
         post.Status = dto.Status;
         post.UpdatedAt = DateTime.UtcNow;
         _dbContext.Posts.Update(post);

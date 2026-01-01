@@ -8,7 +8,7 @@ namespace BlogApi.Services.Interfaces
 
     public interface IPostService
     {
-        Task<PaginationList<Post>> ListPostsAsync(ListPostRequestDto dto);
+        Task<PaginationList<PostResponseDto>> ListPostsAsync(ListPostRequestDto dto);
         Task<Post> GetPostByIdAsync(int id);
         Task<int> CreatePostAsync(AddPostRequestDto dto);
         Task<int> UpdatePostAsync(UpdatePostRequestDto dto);

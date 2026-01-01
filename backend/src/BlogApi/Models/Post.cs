@@ -12,6 +12,9 @@ public class Post
     public required string Title { get; set; }
     public required string Slug { get; set; }
     public required string Content { get; set; }
+    public required string Excerpt { get; set; } = string.Empty;
+    public required string FeaturedImageUrl { get; set; } = string.Empty;
+    public string Tags { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
