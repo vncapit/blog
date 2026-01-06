@@ -13,5 +13,6 @@ namespace BlogApi.Services.Interfaces
         Task<int> CreatePostAsync(AddPostRequestDto dto);
         Task<int> UpdatePostAsync(UpdatePostRequestDto dto);
         Task<int> DeletePostByIdAsync(int id);
+        Task<string> UploadImageAsync(Microsoft.AspNetCore.Http.IFormFile file);
     }
 }

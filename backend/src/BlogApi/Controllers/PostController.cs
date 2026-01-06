@@ -43,4 +43,16 @@ public class PostController : ControllerBase
     {
         return Ok(ApiResponse<int>.Ok(await _postService.DeletePostByIdAsync(dto.Id)));
     }
+
+    [HttpPost("upload")]
+    public async Task<ActionResult> UploadImage()
+    {
+        var file = Request.Form.Files.FirstOrDefault();
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<string>.Fail("No file uploaded"));
+        }   
+        var imageUrl = await _postService.UploadImageAsync(file);
+        return Ok(ApiResponse<UploadResponse>.Ok(new UploadResponse { Url = imageUrl }));
+    }
 }

@@ -1,5 +1,6 @@
 
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using BlogApi.CustomExceptions;
@@ -17,10 +18,12 @@ public class PostService : IPostService
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly AppDbContext _dbContext;
-    public PostService(ICurrentUserService currentUserService, AppDbContext dbContext)
+    private readonly IConfiguration _config;
+    public PostService(ICurrentUserService currentUserService, AppDbContext dbContext, IConfiguration config)
     {
         _currentUserService = currentUserService;
         _dbContext = dbContext;
+        _config = config;
     }
     public async Task<int> CreatePostAsync(AddPostRequestDto dto)
     {
@@ -162,5 +165,30 @@ public class PostService : IPostService
         }
 
         return sb.ToString().Normalize(NormalizationForm.FormC);
+    }
+
+    public async Task<string> UploadImageAsync(IFormFile file)
+    {
+
+         var key = _config["Auth:UploadKey"];
+        const string UPLOAD_URL = $"https://api.imgbb.com/1/upload";
+
+        var content = new MultipartFormDataContent();
+        content.Headers.Add("X-Form-Type", "upload");
+        content.Add(new StringContent(key), "key");
+         var imageContent = new StreamContent(file.OpenReadStream());
+        imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+        content.Add(imageContent, "image", file.FileName);
+        var client = new HttpClient();
+        var response = await client.PostAsync(UPLOAD_URL, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new RequestException(HttpStatusCode.BadGateway, $"Image upload failed: {error}");
+        }
+        var responseString = await response.Content.ReadAsStringAsync();
+        var json = System.Text.Json.JsonDocument.Parse(responseString);
+        var imageUrl = json.RootElement.GetProperty("data").GetProperty("url").GetString();
+        return imageUrl;
     }
 }
