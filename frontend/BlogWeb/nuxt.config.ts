@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', '@pinia/nuxt'],
-
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@pinia/nuxt', '@nuxt/icon'],
   devtools: {
     enabled: true,
   },
@@ -29,12 +28,23 @@ export default defineNuxtConfig({
     },
   },
 
+  icon: {
+    provider: 'iconify',
+    collections: ['lucide'],
+  },
+
   nitro: {
     devProxy: {
       '/api': {
         target: 'http://localhost:5233/api',
         changeOrigin: true,
       },
+    },
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: ['prosemirror-state'],
     },
   },
 });

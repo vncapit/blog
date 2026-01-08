@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "nuxt-tiptap-editor": "^2.3.1"
+  }
+}

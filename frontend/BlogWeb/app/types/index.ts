@@ -57,3 +57,7 @@ export interface ListPostQuery extends PaginationQuery {
   categoryId?: number;
   staus?: Status;
 }
+
+export interface UploadResponse {
+  url: string;
+}

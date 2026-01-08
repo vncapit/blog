@@ -1,0 +1,66 @@
+<script setup lang="ts">
+  import type { NodeViewProps } from '@tiptap/vue-3';
+  import { NodeViewWrapper } from '@tiptap/vue-3';
+  import { usePostApi } from '~/composables/api/admin/usePostApi';
+  const props = defineProps<NodeViewProps>();
+
+  const file = ref<File | null>(null);
+  const loading = ref(false);
+
+  watch(file, async (newFile) => {
+    if (!newFile) return;
+    console.log(newFile);
+    loading.value = true;
+
+    const { upload } = usePostApi();
+    const uploadRes = await upload(newFile);
+    const dataUrl = uploadRes.url;
+
+    // const reader = new FileReader();
+    // reader.onload = async (e) => {
+    //   const dataUrl = e.target?.result as string;
+    //   if (!dataUrl) {
+    //     loading.value = false;
+    //     return;
+    //   }
+
+    //   // Simulate upload delay
+    //   await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const pos = props.getPos();
+    if (typeof pos !== 'number') {
+      loading.value = false;
+      return;
+    }
+
+    props.editor
+      .chain()
+      .focus()
+      .deleteRange({ from: pos, to: pos + 1 })
+      .setImage({ src: dataUrl })
+      .run();
+
+    loading.value = false;
+  });
+</script>
+
+<template>
+  <NodeViewWrapper>
+    <UFileUpload
+      v-model="file"
+      accept="image/*"
+      label="Upload an image"
+      description="SVG, PNG, JPG or GIF (max. 2MB)"
+      :preview="false"
+      class="min-h-48"
+    >
+      <template #leading>
+        <UAvatar
+          :icon="loading ? 'i-lucide-loader-circle' : 'i-lucide-image'"
+          size="xl"
+          :ui="{ icon: [loading && 'animate-spin'] }"
+        />
+      </template>
+    </UFileUpload>
+  </NodeViewWrapper>
+</template>

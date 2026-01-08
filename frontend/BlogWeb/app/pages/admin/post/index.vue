@@ -35,11 +35,37 @@
         "
       />
     </div>
-    <UModal v-model:open="openForm" :dismissible="false" :title="formTitle">
+    <UModal v-model:open="openForm" :dismissible="false" :title="formTitle" :fullscreen="true">
       <template #body>
         <UForm ref="formRef" :schema="schema" :state="form" class="space-y-4">
-          <UFormField label="Post" name="name" required>
-            <UInput v-model="form.name" class="w-full" />
+          <UFormField label="Title" name="title" required>
+            <UInput v-model="form.title" class="w-full" />
+          </UFormField>
+          <UFormField label="Category" name="categoryId" required>
+            <USelect v-model="form.categoryId" :items="categories" class="w-full" />
+          </UFormField>
+          <UFormField label="Content" name="content" required>
+            <Editor v-model="form.content" />
+          </UFormField>
+          <UFormField label="Status" name="status" required>
+            <USelect
+              v-model="form.status"
+              :items="[
+                { label: Status[Status.Draft], value: Status.Draft },
+                { label: Status[Status.Published], value: Status.Published },
+                { label: Status[Status.Archived], value: Status.Archived },
+              ]"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="Featured Image URL" name="featuredImageUrl" required>
+            <UInput v-model="form.featuredImageUrl" class="w-full" />
+          </UFormField>
+          <UFormField label="Excerpt" name="excerpt" required>
+            <UTextarea v-model="form.excerpt" class="w-full" :rows="2" />
+          </UFormField>
+          <UFormField label="Tags (comma separated)" name="tags">
+            <UInput v-model="form.tags" class="w-full" />
           </UFormField>
         </UForm>
       </template>
@@ -63,7 +89,6 @@
   import type { Category, ListPostQuery, Post } from '~/types';
   import { Status } from '~/types';
   import type { SelectItem } from '@nuxt/ui';
-
   definePageMeta({
     layout: 'admin',
   });
@@ -73,15 +98,35 @@
 
   const UButton = resolveComponent('UButton');
   const UPopover = resolveComponent('UPopover');
+  const UBadge = resolveComponent('UBadge');
 
   const posts = ref<Post[]>([]);
 
   const formRef = useTemplateRef('formRef');
   const schema = z.object({
-    name: z.string().min(1, 'Post name is required'),
+    title: z.string().min(1, 'Post title is required'),
+    categoryId: z.number('Category is required'),
+    content: z.string().min(1, 'Content is required'),
+    status: z.enum(Status),
+    tags: z.string().optional(),
+    featuredImageUrl: z.url('Must be a valid URL'),
+    excerpt: z.string().min(1, 'Excerpt is required'),
   });
 
-  const defaultForm = { id: undefined as number | undefined, name: '' };
+  const defaultForm = {
+    id: undefined as number | undefined,
+    categoryId: undefined as number | undefined,
+    title: '',
+    content: '',
+    status: Status.Draft,
+    tags: '',
+    featuredImageUrl: '',
+    excerpt: '',
+    slug: '',
+    authorId: undefined as number | undefined,
+    createdAt: '',
+    updatedAt: '',
+  };
   const openForm = ref(false);
   const formTitle = ref('Add Post');
 
@@ -133,15 +178,16 @@
         return;
       }
       if (form.id) {
-        posts.value = await postApi.update(form as Post);
+        await postApi.update(form as Post);
       } else {
-        posts.value = await postApi.add(form);
+        await postApi.add(form as Post);
       }
       toast.add({
         title: 'Success',
         color: 'success',
         duration: 1500,
       });
+      refreshPosts();
       openForm.value = false;
     } catch (error) {
       console.error(error);
@@ -161,12 +207,13 @@
   };
   const deletePost = async (id: number) => {
     try {
-      posts.value = await postApi.del(id);
+      await postApi.del(id);
       toast.add({
         title: 'Success',
         color: 'success',
         duration: 1500,
       });
+      refreshPosts();
     } catch (error) {}
   };
 
@@ -211,13 +258,25 @@
         },
       },
       cell: ({ row }) => {
-        return h('div', { class: 'flex gap-1 justify-center items-center' }, [
-          row.original.status === Status.Draft
-            ? h('span', { class: 'text-yellow-500 font-semibold' }, 'Draft')
-            : row.original.status === Status.Published
-            ? h('span', { class: 'text-green-500 font-semibold' }, 'Published')
-            : h('span', { class: 'text-gray-500 font-semibold' }, 'Archived'),
-        ]);
+        return h(
+          UBadge,
+          {
+            color:
+              row.original.status === Status.Published
+                ? 'success'
+                : row.original.status === Status.Draft
+                ? 'warning'
+                : 'default',
+          },
+          {
+            default: () =>
+              row.original.status === Status.Published
+                ? 'Published'
+                : row.original.status === Status.Draft
+                ? 'Draft'
+                : 'Archived',
+          }
+        );
       },
     },
     {

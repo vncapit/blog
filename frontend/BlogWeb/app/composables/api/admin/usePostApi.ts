@@ -1,4 +1,4 @@
-import type { ApiResponse, ListPostQuery, ListPostResponse, Post } from '~/types';
+import type { ApiResponse, ListPostQuery, ListPostResponse, Post, UploadResponse } from '~/types';
 
 export const usePostApi = () => {
   const { $api } = useNuxtApp();
@@ -34,5 +34,15 @@ export const usePostApi = () => {
     return res.data;
   };
 
-  return { list, add, update, del };
+  const upload = async (image: File) => {
+    const formData = new FormData();
+    formData.append('file', image);
+    const res = await $api<ApiResponse<UploadResponse>>('Post/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    return res.data;
+  };
+
+  return { list, add, update, del, upload };
 };
